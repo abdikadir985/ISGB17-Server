@@ -1,4 +1,3 @@
-
 //Laboration 1
 const express = require('express');
 const bodyParser = require('body-parser');
@@ -16,10 +15,17 @@ app.get('/',function(request,response){
     let htmlCode = fs.readFileSync(__dirname +'/index.html');
     serverDOM = new jsDOM.JSDOM(htmlCode);
     sectionRef = serverDOM.window.document.querySelector('section');
-    let postNode =  serverDOM.window.document.createTextNode(blogPosts.blogPosts[0].nickName
+    /*let postNode =  serverDOM.window.document.createTextNode(blogPosts.blogPosts[0].nickName
         + ' '+ blogPosts.blogPosts[0].msgSubject +' ' + blogPosts.blogPosts[0].timeStamp + 
         ' '+blogPosts.blogPosts[0].msgBody
-    );
+    );*/
+    let postNode;
+    for(let i =0;i<blogPosts.blogPosts.length;i++){
+        postNode =serverDOM.window.document.createTextNode(blogPosts.blogPosts[i].nickName
+            + ' '+ blogPosts.blogPosts[i].msgSubject +' ' + blogPosts.blogPosts[i].timeStamp + 
+            ' '+blogPosts.blogPosts[i].msgBody
+        );
+    }
     sectionRef.appendChild(postNode);
     htmlCode = serverDOM.serialize();
     response.send(htmlCode);
