@@ -25,9 +25,9 @@ app.get('/',function(request,response){
         blogPosts.blogPosts[i].timeStamp +' ' + blogPosts.blogPosts[i].msgBody + ' '+ 
         blogPosts.blogPosts[i].nickName
         );*/
-        postNode = postNode + '<article><span>'+blogPosts.blogPosts[i].msgSubject + '</span> ' + 
-        blogPosts.blogPosts[i].timeStamp +' <div>' + blogPosts.blogPosts[i].msgBody + '</div><span> '+ 
-        blogPosts.blogPosts[i].nickName+'</span></article>';
+        postNode = postNode + '<article><div><span>'+blogPosts.blogPosts[i].msgSubject + '</span> ' + 
+        blogPosts.blogPosts[i].timeStamp +'</div> <p>' + blogPosts.blogPosts[i].msgBody + '</p> <div><span> '+ 
+        blogPosts.blogPosts[i].nickName+'</span></div></article>';
     }
     sectionRef.innerHTML=postNode;
     htmlCode = serverDOM.serialize();
