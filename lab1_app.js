@@ -25,9 +25,12 @@ app.get('/',function(request,response){
         blogPosts.blogPosts[i].timeStamp +' ' + blogPosts.blogPosts[i].msgBody + ' '+ 
         blogPosts.blogPosts[i].nickName
         );*/
-        postNode = postNode + '<article><div><span>'+blogPosts.blogPosts[i].msgSubject + '</span> ' + 
-        blogPosts.blogPosts[i].timeStamp +'</div> <p>' + blogPosts.blogPosts[i].msgBody + '</p> <div><span> '+ 
-        blogPosts.blogPosts[i].nickName+'</span></div></article>';
+        /*postNode = postNode + '<article><span>'+blogPosts.blogPosts[i].msgSubject + '</span> ' + 
+        blogPosts.blogPosts[i].timeStamp +' <div>' + blogPosts.blogPosts[i].msgBody + '</div><span> '+ 
+        blogPosts.blogPosts[i].nickName+'</span></article>';*/
+        postNode = postNode + '<article class="clearfix border border-info p-2"><div><span class="font-weight-bold">'+blogPosts.blogPosts[i].msgSubject + '</span> <p class="float-right">' + 
+        blogPosts.blogPosts[i].timeStamp +'</p></div> <p class="border-top border-bottom m-0 p-2">' + blogPosts.blogPosts[i].msgBody + 
+        '</p> <div><span class="font-weight-bold float-right"> '+ blogPosts.blogPosts[i].nickName+'</span></div></article>';
     }
     sectionRef.innerHTML=postNode;
     htmlCode = serverDOM.serialize();
@@ -47,8 +50,14 @@ app.post('/skriv',function(request,response){
     }
     const dateObject = new Date();
     const year = dateObject.getFullYear();
-    const month = dateObject.getMonth()+1;
-    const date = dateObject.getDate();
+    let month = dateObject.getMonth()+1;
+    let date = dateObject.getDate();
+    if(month<10){
+        month = '0'+month;
+    }
+    if(date<10){
+        date='0'+date;
+    }
     const dateInText = year+'-'+month+'-'+date;
 
     blogPosts.blogPosts.push({
