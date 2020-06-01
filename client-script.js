@@ -12,7 +12,7 @@ function textRutaValidering (event) {
     try {
         event.preventDefault();
         //chattflödet
-        socket.emit('newContent', { "contentId" : document.querySelector('#msg') } );
+        socket.emit('newContent', { "contentId" : document.querySelector('#msg').value } );
 
         if(document.getElementById('msg').value.length<=2){
             throw "Texten måste vara minst 2 tecken";
@@ -37,7 +37,7 @@ socket.on('addContent', function(data) {
 
     let text = document.createElement('p');
     text.setAttribute('style','text-align: left');
-    text.textContent = data.name + ': ' + data.time;
+    text.textContent = data.contentId +': ' + data.name + ': ' + data.time;
 
     flow.appendChild(text);
 
