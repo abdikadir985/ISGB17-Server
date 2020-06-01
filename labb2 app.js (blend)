@@ -1,0 +1,89 @@
+'use strict';
+const express = require('express');
+const cookieParser = require('cookie-parser');
+const bodyParser = require('body-parser');
+const m = require('./my-module.js');
+
+const app = express();
+const http = require('http').createServer(app);
+const io = require('socket.io')(http);
+
+//Middleware
+app.use(cookieParser());
+app.use(bodyParser.urlencoded({ extended: true}));
+
+let server = http.listen(3001, () => {
+    console.log('Server is up!');
+});
+
+//Sökvägar (routs)
+app.get('/', function(req, res) {
+    let cookie = req.cookies.nickName;
+
+    if (cookie === undefined) {
+        res.sendFile(__dirname + '/loggain.html');
+    }
+    else {
+        res.sendFile(__dirname + '/index.html');
+    }
+});
+
+app.get('/favicon.ico', function(req,res) {
+    res.sendFile(__dirname + '/favicon.ico');
+});
+
+//detta connectar dig till ditt client-script
+app.get('/client-script.js', function (req, res) {
+    res.sendFile(__dirname + '/client-script.js');
+});
+/*
+här har vi en post där om vi skriver ett nickname eller om nickname är längre än 3 ord
+kommer den sparas i klienten i ca 15min och befinnas i cookien kallad nickName.
+därefter redirectas du till index.html...
+(uppfyller du inte kraven ges ett error 404)
+*/
+app.post('/', function(req, res) {
+    let nickname = req.body.nickname;
+
+    if(nickname !== undefined && nickname.length >= 3) {
+        //sparas i klienten i 15min.
+        res.cookie('nickName', nickname, { maxAge: 900000, httpOnly: true});
+        res.redirect('/');
+    }
+    else {
+        res.status(404);
+        res.send('Det får inte vara tomt i fältet och du måste mer än 2 ord!' 
+        + ' (gå tillbaks till föregående sida)');
+    }
+});
+
+//socket funktioner...
+io.on('connection', (socket)=> {
+    console.log('a user connected');
+
+
+    let cookieString = socket.handshake.headers.cookie;
+    //console.log(cookieString);
+    let cookieList = m.parseCookies(cookieString);
+
+    if(cookieList.nickName !== undefined) {
+        socket.nickName = cookieList.nickName;
+    }
+
+    socket.on('disconnect', ()=> {
+        console.log('a user disconnected');
+    });
+
+    socket.on('newContent', function(data) {
+        console.log(data);
+        let content = data.contentId;
+        let time = m.getTimeStamp();
+        let nick = socket.nickName;
+
+        io.emit('addContent',{'contentId':content, 'name':nick, 'time':time});
+    });
+});
+
+//är detsamma som att denna public tillåter dig att kunna komma åt
+//bilden som används i index.html (uil.svg)
+app.use('/public', express.static(__dirname + '/public'));
