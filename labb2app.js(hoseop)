@@ -1,0 +1,87 @@
+'use strict';
+const express = require('express');
+const cookieParser = require('cookie-parser');
+const app = new express();
+const http = require('http').createServer(app);
+const bodyParser = require('body-parser');
+const jsDOM  = require('jsdom');
+const fs = require('fs');
+const myModule = require('./my-module');
+app.use(cookieParser());
+app.use(bodyParser.urlencoded({extended:true}));
+
+let loginSuccess ='';
+let errorMessage = '';
+const io = require('socket.io')(http);
+let server = http.listen(3001,()=>{
+    console.log('server is running');
+});
+app.get('/',function(request,response){  
+    let cookie =  request.cookies.nickName;
+    if(cookie){
+        response.sendFile(__dirname+'/index.html');
+    }else{
+        response.sendFile(__dirname+'/loggain.html');
+        if(loginSuccess == false&&loginSuccess!==''){
+            showLoginStatus(response);
+        }
+    }
+});
+app.post('/',function(request,response){
+    const htmlCode = fs.readFileSync(__dirname + '/loggain.html');
+    const loggaInDom = new jsDOM.JSDOM(htmlCode);
+    const input = request.body.nickname;
+    try{
+        if(input.length<3){
+            throw "Nicknamnet måste vara minst 3 tecken"; 
+        }
+        else{
+            response.cookie('nickName',input);
+            loginSuccess = true;
+            response.redirect('/');
+        }
+    }
+    catch(error){
+        loginSuccess = false;
+        errorMessage = error;
+        response.redirect('/');
+    }
+});
+app.get('/public',express.static(__dirname+'/public'));
+app.use('/',express.static(__dirname+'/'));
+app.get('/client-script.js', function (req, res) {
+    res.sendFile(__dirname + '/client-script.js');
+});
+
+function showLoginStatus(response){
+    let htmlCode = fs.readFileSync(__dirname + '/loggain.html');
+    const loginDOM  =  new jsDOM.JSDOM(htmlCode);
+    const display3 = loginDOM.window.document.querySelector('.display-3');
+    display3.innerHTML = errorMessage;
+    htmlCode = loginDOM.serialize();
+    response.send(htmlCode);
+}
+
+io.on('connection',function(socket){
+    console.log('connected');
+    socket.on('disconnect',()=>{
+        console.log('a user disconnected');
+    });
+    socket.on('sendMessage',function(data){
+        const message = data.text;
+        const cookieList = socket.handshake.headers.cookie;
+        const parsedCookies = myModule.parseCookies(cookieList);
+        
+        if(parsedCookies.nickName!==undefined){
+            socket.nickName = parsedCookies.nickName;
+        }
+        io.emit('showMessage',{
+            'message':message,
+            'nickName':socket.nickName,
+            'time':myModule.getTimeStamp()
+        });
+    });
+});
+app.get('/favicon.ico',function(req,res){
+    res.sendFile(__dirname+'/favicon.ico');
+});
