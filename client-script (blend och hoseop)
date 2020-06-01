@@ -1,0 +1,45 @@
+'use strict';
+let socket = io();
+window.addEventListener('load',function(){
+    const button = document.querySelector('.btn');
+    button.addEventListener('click',function(event){
+        const inputText = document.getElementById('msg').value;
+        try{
+            event.preventDefault();
+            if(inputText.length<2){
+                throw "Texten måste vara minst 2 tecken";
+            }else{
+                const errorMessage = document.querySelector('.row p');
+                if(errorMessage){
+                    errorMessage.remove();
+                }
+                socket.emit('newContent', { "contentId" : document.querySelector('#msg').value } );
+                //showMessage();
+            }
+        }catch(error){
+            const div  = document.querySelector('.row');
+            console.log('error');
+            if(!div.querySelector('p')){
+                const errorP = document.createElement('p');
+                errorP.setAttribute('style','color:red;');
+                const errorMessage = document.createTextNode(error);
+                errorP.appendChild(errorMessage);
+                div.appendChild(errorP);
+            }
+        }
+    });
+});
+//function showMessage(){
+    socket.on('addContent', function(data) {
+
+        //skriv ut content
+        let flow = document.querySelector('#flow');
+    
+        let text = document.createElement('p');
+        text.setAttribute('style','text-align: left');
+        text.textContent = data.contentId +': ' + data.name + ': ' + data.time;
+    
+        flow.appendChild(text);
+    
+    });
+//}
