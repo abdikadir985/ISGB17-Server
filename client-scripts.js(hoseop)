@@ -1,0 +1,44 @@
+'use strict';
+let socket = io();
+window.addEventListener('load',function(){
+    const button = document.querySelector('.btn');
+    button.addEventListener('click',function(event){
+        const inputText = document.getElementById('msg').value;
+        try{
+            event.preventDefault();
+            if(inputText.length<2){
+                throw "Texten måste vara minst 2 tecken";
+            }else{
+                const errorMessage = document.querySelector('.row p');
+                if(errorMessage){
+                    errorMessage.remove();
+                }
+                socket.emit('sendMessage',{
+                    'text':inputText
+                });
+                //showMessage();
+            }
+        }catch(error){
+            const div  = document.querySelector('.row');
+            console.log('error');
+            if(!div.querySelector('p')){
+                const errorP = document.createElement('p');
+                errorP.setAttribute('style','color:red;');
+                const errorMessage = document.createTextNode(error);
+                errorP.appendChild(errorMessage);
+                div.appendChild(errorP);
+            }
+        }
+    });
+});
+//function showMessage(){
+    socket.on('showMessage',function(data){
+        let flow = document.querySelector('#flow');
+        let text = document.createElement('p');
+        text.setAttribute('style','text-align: left');
+        let textNode = document.createTextNode(data.time+" "+data.nickName + " : "+data.message);
+        text.appendChild(textNode);
+        flow.appendChild(text);
+        //console.log("nickname :"+data.nickName + " message :"+data.message);
+    });
+//}
