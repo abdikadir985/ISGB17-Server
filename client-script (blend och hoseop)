@@ -14,8 +14,9 @@ window.addEventListener('load',function(){
                     errorMessage.remove();
                 }
                 socket.emit('newContent', { "contentId" : document.querySelector('#msg').value } );
-                //showMessage();
             }
+            //tömmer bort textrutan
+            document.getElementById('msg').value='';
         }catch(error){
             const div  = document.querySelector('.row');
             console.log('error');
