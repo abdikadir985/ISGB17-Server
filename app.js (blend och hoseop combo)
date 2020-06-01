@@ -1,32 +1,39 @@
 'use strict';
 const express = require('express');
 const cookieParser = require('cookie-parser');
+const bodyParser = require('body-parser');
+const myModule = require('./my-module');
+
 const app = new express();
 const http = require('http').createServer(app);
-const bodyParser = require('body-parser');
 const jsDOM  = require('jsdom');
 const fs = require('fs');
-const myModule = require('./my-module');
+
+//Middleware
 app.use(cookieParser());
 app.use(bodyParser.urlencoded({extended:true}));
 
-let loginSuccess ='';
-let errorMessage = '';
 const io = require('socket.io')(http);
 let server = http.listen(3001,()=>{
     console.log('server is running');
 });
+
+//Sökvägar (routs)
+let loginSuccess ='';
+let errorMessage = '';
 app.get('/',function(request,response){  
     let cookie =  request.cookies.nickName;
     if(cookie){
         response.sendFile(__dirname+'/index.html');
     }else{
         response.sendFile(__dirname+'/loggain.html');
+        
         if(loginSuccess == false&&loginSuccess!==''){
             showLoginStatus(response);
         }
     }
 });
+
 app.post('/',function(request,response){
     const htmlCode = fs.readFileSync(__dirname + '/loggain.html');
     const loggaInDom = new jsDOM.JSDOM(htmlCode);
@@ -47,7 +54,10 @@ app.post('/',function(request,response){
         response.redirect('/');
     }
 });
+//den här hämtar uil.svg
 app.use('/public',express.static(__dirname+'/public'));
+
+//detta connectar dig till ditt client-script
 app.get('/client-script.js', function (req, res) {
     res.sendFile(__dirname + '/client-script.js');
 });
@@ -60,6 +70,7 @@ function showLoginStatus(response){
     htmlCode = loginDOM.serialize();
     response.send(htmlCode);
 }
+//socket funktioner
 io.on('connection', (socket)=> {
     console.log('a user connected');
     let cookieString = socket.handshake.headers.cookie;
@@ -71,13 +82,13 @@ io.on('connection', (socket)=> {
         console.log('a user disconnected');
     });
     socket.on('newContent', function(data) {
-        console.log(data);
         let content = data.contentId;
         let time = myModule.getTimeStamp();
         let nick = socket.nickName;
         io.emit('addContent',{'contentId':content, 'name':nick, 'time':time});
     });
 });
+//Detta är bilden som visas som icon bredvid din title i head
 app.get('/favicon.ico',function(req,res){
     res.sendFile(__dirname+'/favicon.ico');
 });
