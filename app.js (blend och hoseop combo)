@@ -47,8 +47,7 @@ app.post('/',function(request,response){
         response.redirect('/');
     }
 });
-app.get('/public',express.static(__dirname+'/public'));
-app.use('/',express.static(__dirname+'/'));
+app.use('/public',express.static(__dirname+'/public'));
 app.get('/client-script.js', function (req, res) {
     res.sendFile(__dirname + '/client-script.js');
 });
