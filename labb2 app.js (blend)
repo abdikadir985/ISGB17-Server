@@ -44,16 +44,15 @@ därefter redirectas du till index.html...
 */
 app.post('/', function(req, res) {
     let nickname = req.body.nickname;
-
+    
     if(nickname !== undefined && nickname.length >= 3) {
         //sparas i klienten i 15min.
         res.cookie('nickName', nickname, { maxAge: 900000, httpOnly: true});
         res.redirect('/');
     }
     else {
-        res.status(404);
-        res.send('Det får inte vara tomt i fältet och du måste mer än 2 ord!' 
-        + ' (gå tillbaks till föregående sida)');
+        res.type('html');
+        res.send('<meta http-equiv="refresh" content="5"> <h1>Error</h1> <p>Det får inte vara tomt i fältet och du måste mer än 2 ord!</p>');
     }
 });
 
@@ -80,7 +79,7 @@ io.on('connection', (socket)=> {
         let time = m.getTimeStamp();
         let nick = socket.nickName;
 
-        io.emit('addContent',{'contentId':content, 'name':nick, 'time':time});
+        io.emit('addContent',{'time':time, 'name':nick, 'contentId':content });
     });
 });
 
