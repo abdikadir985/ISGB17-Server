@@ -29,17 +29,15 @@ window.addEventListener('load',function(){
         }
     });
 });
-//function showMessage(){
-    socket.on('addContent', function(data) {
+socket.on('addContent', function(data) {
 
-        //skriv ut content
-        let flow = document.querySelector('#flow');
-    
-        let text = document.createElement('p');
-        text.setAttribute('style','text-align: left');
-        text.textContent = data.contentId +': ' + data.name + ': ' + data.time;
-    
-        flow.appendChild(text);
-    
-    });
-//}
+    //skriv ut content
+    let flow = document.querySelector('#flow');
+
+    let text = document.createElement('p');
+    text.setAttribute('style','text-align: left');
+    text.innerHTML =data.time + ': <b>' + data.name +'</b>: ' + data.contentId ;
+
+    flow.appendChild(text);
+
+});
