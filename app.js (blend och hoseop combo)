@@ -26,7 +26,8 @@ app.get('/',function(request,response){
     let cookie =  request.cookies.nickName;
     if(cookie){
         response.sendFile(__dirname+'/index.html');
-    }else{
+    }
+    else{
         response.sendFile(__dirname+'/loggain.html');
         
         if(loginSuccess == false&&loginSuccess!==''){
@@ -85,7 +86,7 @@ io.on('connection', (socket)=> {
     socket.on('disconnect', ()=> {
         console.log('a user disconnected');
     });
-    
+
     socket.on('newContent', function(data) {
         let content = data.contentId;
         let time = myModule.getTimeStamp();
