@@ -68,7 +68,7 @@ io.on('connection', (socket)=> {
     console.log('a user connected');
     let cookieString = socket.handshake.headers.cookie;
     let cookieList = myModule.parseCookies(cookieString);
-    
+    let content, time, nick;
     if(cookieList.nickName !== undefined) {
         socket.nickName = cookieList.nickName;
     }
@@ -105,16 +105,16 @@ io.on('connection', (socket)=> {
         'userList':userList
     });
     socket.on('newContent', function(data) {
-        let content = data.contentId;
-        let time = myModule.getTimeStamp();
-        let nick = socket.nickName;
+        content = data.contentId;
+        time = myModule.getTimeStamp();
+        nick = socket.nickName;
         io.emit('EveryoneContent',{'contentId':content, 'name':nick, 'time':time});
     });
 
     socket.on('privateMessage',function(data){
-        let content = data.contentId;
-        let time = myModule.getTimeStamp();
-        let nick = socket.nickName;
+        content = data.contentId;
+        time = myModule.getTimeStamp();
+        nick = socket.nickName;
         let index = data.index;
         //skicka meddelande till sig själv
         socket.emit('sendPrivateMessage',{
