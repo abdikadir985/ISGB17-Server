@@ -1,35 +1,40 @@
 'use strict';
+
 let socket = io();
-window.addEventListener('load',function(){
-    const button = document.querySelector('.btn');
-    button.addEventListener('click',function(event){
-        const inputText = document.getElementById('msg').value;
-        try{
-            event.preventDefault();
-            if(inputText.length<2){
-                throw "Texten måste vara minst 2 tecken";
-            }else{
-                const errorMessage = document.querySelector('.row p');
-                if(errorMessage){
-                    errorMessage.remove();
-                }
-                socket.emit('newContent', { "contentId" : document.querySelector('#msg').value } );
-            }
-            //tömmer bort textrutan
-            document.getElementById('msg').value='';
-        }catch(error){
-            const div  = document.querySelector('.row');
-            console.log('error');
-            if(!div.querySelector('p')){
-                const errorP = document.createElement('p');
-                errorP.setAttribute('style','color:red;');
-                const errorMessage = document.createTextNode(error);
-                errorP.appendChild(errorMessage);
-                div.appendChild(errorP);
-            }
-        }
-    });
+
+window.addEventListener('load', ()=> {
+    let button = document.querySelector('.btn');
+
+    button.addEventListener('click', textRutaValidering);
 });
+
+function textRutaValidering (event) {
+    try {
+        event.preventDefault();
+        //chattflödet
+        if(document.getElementById('msg').value.length<=2){
+            throw "Texten måste vara minst 2 tecken";
+        }
+        else {
+            const errorMessage = document.querySelector('.row p');
+            if(errorMessage){
+                errorMessage.remove();
+            }
+            socket.emit('newContent', { "contentId" : document.querySelector('#msg').value } );
+        }
+        document.getElementById('msg').value='';
+    }
+    catch(error) {
+        const div  = document.querySelector('.row');
+        if(!div.querySelector('p')){
+            const errorP = document.createElement('p');
+            errorP.setAttribute('style','color:red;');
+            const errorMessage = document.createTextNode(error);
+            errorP.appendChild(errorMessage);
+            div.appendChild(errorP);
+        }
+    }
+}
 socket.on('addContent', function(data) {
 
     //skriv ut content
