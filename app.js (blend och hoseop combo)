@@ -1,4 +1,5 @@
 'use strict';
+
 const express = require('express');
 const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
@@ -6,6 +7,7 @@ const myModule = require('./my-module');
 
 const app = new express();
 const http = require('http').createServer(app);
+const io = require('socket.io')(http);
 const jsDOM  = require('jsdom');
 const fs = require('fs');
 
@@ -13,9 +15,8 @@ const fs = require('fs');
 app.use(cookieParser());
 app.use(bodyParser.urlencoded({extended:true}));
 
-const io = require('socket.io')(http);
 let server = http.listen(3001,()=>{
-    console.log('server is running');
+    console.log('Server is running');
 });
 
 //Sökvägar (routs)
@@ -73,14 +74,18 @@ function showLoginStatus(response){
 //socket funktioner
 io.on('connection', (socket)=> {
     console.log('a user connected');
+
     let cookieString = socket.handshake.headers.cookie;
     let cookieList = myModule.parseCookies(cookieString);
+
     if(cookieList.nickName !== undefined) {
         socket.nickName = cookieList.nickName;
     }
+
     socket.on('disconnect', ()=> {
         console.log('a user disconnected');
     });
+    
     socket.on('newContent', function(data) {
         let content = data.contentId;
         let time = myModule.getTimeStamp();
