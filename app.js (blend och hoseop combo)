@@ -24,19 +24,25 @@ let loginSuccess ='';
 let errorMessage = '';
 app.get('/',function(request,response){  
     let cookie =  request.cookies.nickName;
+    //om webbläsaren har cookie.nickName visa innehållet av index.html
+    //annars loggain.html
     if(cookie){
         response.sendFile(__dirname+'/index.html');
     }
     else{
         response.sendFile(__dirname+'/loggain.html');
-        
+        //om loginSuccess är inte false och inte tom, kör funktion showLoginStatus
         if(loginSuccess == false&&loginSuccess!==''){
             showLoginStatus(response);
         }
     }
 });
-
+//När användaren försöker logga in
 app.post('/',function(request,response){
+/*
+*Läs html innehåll från loggain.html 
+*och om input värde i loggain.html är kortare än 3 bokstäver visa felmeddelande 
+*/
     const htmlCode = fs.readFileSync(__dirname + '/loggain.html');
     const loggaInDom = new jsDOM.JSDOM(htmlCode);
     const input = request.body.nickname;
@@ -45,6 +51,7 @@ app.post('/',function(request,response){
             throw "Nicknamnet måste vara minst 3 tecken"; 
         }
         else{
+        //annars sätt kakan och sätt boolean loginSuccess till true
             response.cookie('nickName',input);
             loginSuccess = true;
             response.redirect('/');
@@ -67,6 +74,7 @@ app.get('/client-script.js', function (req, res) {
 app.get('/favicon.ico',function(req,res){
     res.sendFile(__dirname+'/favicon.ico');
 });
+//funktion som behövs för att visa felmeddelande när inloggningen misslyckades
 function showLoginStatus(response){
     let htmlCode = fs.readFileSync(__dirname + '/loggain.html');
     const loginDOM  =  new jsDOM.JSDOM(htmlCode);
