@@ -1,48 +1,34 @@
 'use strict';
-
 const express = require('express');
 const cookieParser = require('cookie-parser');
-const bodyParser = require('body-parser');
-const myModule = require('./my-module');
-
 const app = new express();
 const http = require('http').createServer(app);
-const io = require('socket.io')(http);
+const bodyParser = require('body-parser');
 const jsDOM  = require('jsdom');
 const fs = require('fs');
-
-//Middleware
+const myModule = require('./my-module');
 app.use(cookieParser());
 app.use(bodyParser.urlencoded({extended:true}));
 
-let server = http.listen(3001,()=>{
-    console.log('Server is running');
-});
-
-//Sökvägar (routs)
 let loginSuccess ='';
 let errorMessage = '';
+let socketIDVektor=[];
+const io = require('socket.io')(http);
+let server = http.listen(3001,()=>{
+    console.log('server is running');
+});
 app.get('/',function(request,response){  
     let cookie =  request.cookies.nickName;
-    //om webbläsaren har cookie.nickName visa innehållet av index.html
-    //annars loggain.html
     if(cookie){
         response.sendFile(__dirname+'/index.html');
-    }
-    else{
+    }else{
         response.sendFile(__dirname+'/loggain.html');
-        //om loginSuccess är inte false och inte tom, kör funktion showLoginStatus
         if(loginSuccess == false&&loginSuccess!==''){
             showLoginStatus(response);
         }
     }
 });
-//När användaren försöker logga in
 app.post('/',function(request,response){
-/*
-*Läs html innehåll från loggain.html 
-*och om input värde i loggain.html är kortare än 3 bokstäver visa felmeddelande 
-*/
     const htmlCode = fs.readFileSync(__dirname + '/loggain.html');
     const loggaInDom = new jsDOM.JSDOM(htmlCode);
     const input = request.body.nickname;
@@ -51,7 +37,6 @@ app.post('/',function(request,response){
             throw "Nicknamnet måste vara minst 3 tecken"; 
         }
         else{
-        //annars sätt kakan och sätt boolean loginSuccess till true
             response.cookie('nickName',input);
             loginSuccess = true;
             response.redirect('/');
@@ -63,18 +48,11 @@ app.post('/',function(request,response){
         response.redirect('/');
     }
 });
-//den här hämtar uil.svg
 app.use('/public',express.static(__dirname+'/public'));
-
-//detta connectar dig till ditt client-script
 app.get('/client-script.js', function (req, res) {
     res.sendFile(__dirname + '/client-script.js');
 });
-//Detta är bilden som visas som icon bredvid din title i head
-app.get('/favicon.ico',function(req,res){
-    res.sendFile(__dirname+'/favicon.ico');
-});
-//funktion som behövs för att visa felmeddelande när inloggningen misslyckades
+
 function showLoginStatus(response){
     let htmlCode = fs.readFileSync(__dirname + '/loggain.html');
     const loginDOM  =  new jsDOM.JSDOM(htmlCode);
@@ -83,25 +61,76 @@ function showLoginStatus(response){
     htmlCode = loginDOM.serialize();
     response.send(htmlCode);
 }
-//socket funktioner
+//en vektor som behåller nickname och en vektor som behåller socket ID
+let userList = [];
+let socketIDList = [];
 io.on('connection', (socket)=> {
     console.log('a user connected');
-
     let cookieString = socket.handshake.headers.cookie;
     let cookieList = myModule.parseCookies(cookieString);
-
+    let content, time, nick;
     if(cookieList.nickName !== undefined) {
         socket.nickName = cookieList.nickName;
     }
-
     socket.on('disconnect', ()=> {
         console.log('a user disconnected');
     });
-
+    /**
+     * connection händer både på refresh och när användaren avslutar chatten.
+     * Varje gång när ny connection händer, webläsaren tilldelar ett nytt socket.id till klienter
+     * Serverside socket.io förstår inte  har användaren laddat om sidan eller ny användaren har kommit in
+     * Därför vi måste skriva kod som säger att användaren har laddat om sidan nu. 
+     * Det kan vi göra genom att kolla om nicknamnet finns eller inte. 
+     * Om inte finns indexOf returnerar -1. 
+     */
+    if(userList.indexOf(socket.nickName)<0){
+        /**
+         * Om inte finns, lägg till nicknamnet och socket.id till vektorn 
+         */
+        userList.push(socket.nickName);
+        socketIDList.push(socket.id);
+    }else{
+        /**
+         * Om finns, istället att lägga till socket id, bara byt socket.id 
+         * T.ex om Nickname "Niklas" finns i vektorn userList, returnera Niklas position 
+         * och sätt socket.id som användare Niklas har nu 
+         */
+        const userNameIndex = userList.indexOf(socket.nickName);
+        socketIDList[userNameIndex] = socket.id;
+    }
+    /**
+     * När allt klar ovanför, skicka en socket event till klient med uppdaterad userList 
+     */
+    io.emit('updateUserList',{
+        'userList':userList
+    });
     socket.on('newContent', function(data) {
-        let content = data.contentId;
-        let time = myModule.getTimeStamp();
-        let nick = socket.nickName;
+        content = data.contentId;
+        time = myModule.getTimeStamp();
+        nick = socket.nickName;
         io.emit('EveryoneContent',{'contentId':content, 'name':nick, 'time':time});
     });
+
+    socket.on('privateMessage',function(data){
+        content = data.contentId;
+        time = myModule.getTimeStamp();
+        nick = socket.nickName;
+        let index = data.index;
+        //skicka meddelande till sig själv
+        socket.emit('sendPrivateMessage',{
+            'contentId':content, 'name':nick, 'time':time
+        });
+        /**
+         * Skicka meddelande till den användare som vill man skicka.
+         * Skillnad är att man måste använda to() efter socket.
+         * Parametervärde i to är den socket.id av den användare som ska få meddelande. 
+         *  
+         */
+        socket.to(socketIDList[index]).emit('sendPrivateMessage',{
+            'contentId':content, 'name':nick, 'time':time
+        });
+    });
+});
+app.get('/favicon.ico',function(req,res){
+    res.sendFile(__dirname+'/favicon.ico');
 });
