@@ -1,7 +1,9 @@
 'use strict';
 
 let socket = io();
-
+let userList=[];
+let userIndex = null;
+let isMessagePrivate = null; 
 window.addEventListener('load', ()=> {
     let button = document.querySelector('.btn');
 
@@ -9,10 +11,11 @@ window.addEventListener('load', ()=> {
 });
 
 function textRutaValidering (event) {
+    let inputText = document.getElementById('msg').value;
     try {
         event.preventDefault();
         //chattflödet
-        if(document.getElementById('msg').value.length<=2){
+        if(inputText.length<=2){
             throw "Texten måste vara minst 2 tecken";
         }
         else {
@@ -20,7 +23,34 @@ function textRutaValidering (event) {
             if(errorMessage){
                 errorMessage.remove();
             }
-            socket.emit('newContent', { "contentId" : document.querySelector('#msg').value } );
+                            /**
+                 * Algoritmer som jag använde för att skicka en privat meddelande 
+                 * Jag tänkte det kunde vara bra om man kan skicka en privat meddelande om användaren 
+                 * börjar sin meddelande med '@nickName'. När flera klienter är anslutna man måste kolla
+                 * alla av dem. Därför loopar här man userList vektor. 
+                 * Om startsWith returnerar true, skicka input värde 
+                 * OCH 
+                 * nickName index till server. 
+                 */
+            for(let i =0;i<userList.length;i++){
+                if(inputText.startsWith('@'+userList[i])){
+                    isMessagePrivate = true;
+                    userIndex = i;
+                    break;
+                }
+            }
+            if(isMessagePrivate===true){
+                //socket.emit för att skicka en privat message
+                socket.emit('privateMessage',{
+                    "contentId" : document.querySelector('#msg').value,
+                    "index":userIndex
+                })
+            }
+           else
+           //för allmänna och offentliga samtal
+                socket.emit('newContent', { "contentId" : document.querySelector('#msg').value } );
+            //showMessage();
+            isMessagePrivate = false;
         }
         document.getElementById('msg').value='';
     }
@@ -35,7 +65,43 @@ function textRutaValidering (event) {
         }
     }
 }
+/**
+ * Klient koden hämtar updateUserList event från server och uppdaterar en klientversion 
+ * användarelistvektor. Man kan tänka varför man behöver det men i vår det behövs för att skicka en 
+ * privat meddelande event till server 
+ */
+
+socket.on('updateUserList',function(data){
+    userList = data.userList;
+});
 socket.on('addContent', function(data) {
+
+    //skriv ut content
+    let flow = document.querySelector('#flow');
+
+    let text = document.createElement('p');
+    text.setAttribute('style','text-align: left');
+    text.innerHTML =data.time + ': <b>' + data.name +'</b>: ' + data.contentId ;
+
+    flow.appendChild(text);
+
+});
+
+socket.on('sendPrivateMessage', function(data) {
+
+    //skriv ut content
+    let flow = document.querySelector('#flow');
+
+    let text = document.createElement('p');
+    text.setAttribute('style','text-align: left');
+    text.setAttribute('style','color:pink');
+    text.innerHTML =data.time + ': <b>' + data.name +'</b>: ' + data.contentId ;
+
+    flow.appendChild(text);
+
+});
+
+socket.on('EveryoneContent', function(data) {
 
     //skriv ut content
     let flow = document.querySelector('#flow');
