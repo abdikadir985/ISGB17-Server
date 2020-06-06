@@ -13,6 +13,7 @@ window.addEventListener('load', ()=> {
 function textRutaValidering (event) {
     let inputText = document.getElementById('msg').value;
     try {
+    //blocka sidan att laddas igen
         event.preventDefault();
         //chattflödet
         if(inputText.length<=2){
